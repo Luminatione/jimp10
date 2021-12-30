@@ -16,10 +16,10 @@ alloc_spl (spline_t * spl, int n)
 }
 
 int
-read_spl (FILE * inf, spline_t * spl)
+read_spl (FILE * inputFile, spline_t * spl)
 {
   int i;
-  if (fscanf (inf, "%d", &(spl->n)) != 1 || spl->n < 0)
+  if (fscanf (inputFile, "%d", &(spl->n)) != 1 || spl->n < 0)
     return 1;
 
   if (alloc_spl (spl, spl->n))
@@ -27,7 +27,7 @@ read_spl (FILE * inf, spline_t * spl)
 
   for (i = 0; i < spl->n; i++)
     if (fscanf
-        (inf, "%lf %lf %lf %lf %lf", spl->x + i, spl->f + i, spl->f1 + i,
+        (inputFile, "%lf %lf %lf %lf %lf", spl->x + i, spl->f + i, spl->f1 + i,
          spl->f2 + i, spl->f3 + i) != 5)
       return 1;
 
@@ -35,12 +35,12 @@ read_spl (FILE * inf, spline_t * spl)
 }
 
 void
-write_spl (spline_t * spl, FILE * ouf)
+write_spl (spline_t * spl, FILE * outputFile)
 {
   int i;
-  fprintf (ouf, "%d\n", spl->n);
+  fprintf (outputFile, "%d\n", spl->n);
   for (i = 0; i < spl->n; i++)
-    fprintf (ouf, "%g %g %g %g %g\n", spl->x[i], spl->f[i], spl->f1[i],
+    fprintf (outputFile, "%g %g %g %g %g\n", spl->x[i], spl->f[i], spl->f1[i],
              spl->f2[i], spl->f3[i]);
 }
 

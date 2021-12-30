@@ -27,31 +27,31 @@ int
 main(int argc, char** argv)
 {
 	int opt;
-	char* inp = NULL;
-	char* out = NULL;
-	char* gpt = NULL;
+	char* inputFileName = NULL;
+	char* splineFileName = NULL;
+	char* plotFileName = NULL;
 	double fromX = 0;
 	double toX = 0;
 	int n = 100;
-	char* progname = argv[0];
+	char* executableName = argv[0];
 
-	points_t pts;
-	spline_t spl;
+	points_t points;
+	spline_t line;
 
-	pts.n = 0;
-	spl.n = 0;
+	points.n = 0;
+	line.n = 0;
 
 	/* process options, save user choices */
 	while ((opt = getopt(argc, argv, "p:s:g:f:t:n:")) != -1) {
 		switch (opt) {
 		case 'p':
-			inp = optarg;
+			inputFileName = optarg;
 			break;
 		case 's':
-			out = optarg;
+			splineFileName = optarg;
 			break;
 		case 'g':
-			gpt = optarg;
+			plotFileName = optarg;
 			break;
 		case 'f':
 			fromX = atof(optarg);
@@ -63,7 +63,7 @@ main(int argc, char** argv)
 			n = atoi(optarg);
 			break;
 		default:                   /* '?' */
-			fprintf(stderr, usage, progname);
+			fprintf(stderr, usage, executableName);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -72,49 +72,47 @@ main(int argc, char** argv)
 		for (; optind < argc; optind++)
 			fprintf(stderr, "\t\"%s\"\n", argv[optind]);
 		fprintf(stderr, "\n");
-		fprintf(stderr, usage, progname);
+		fprintf(stderr, usage, executableName);
 		exit(EXIT_FAILURE);
 	}
 
 	/* if points-file was given, then read points, generate spline, save it to file */
-	if (inp != NULL) {
-		FILE* ouf = NULL; /* we shall open it later, when we shall get points */
-
-		FILE* inf = fopen(inp, "r");
-		if (inf == NULL) {
-			fprintf(stderr, "%s: can not read points file: %s\n\n", argv[0], inp);
+	if (inputFileName != NULL) {
+		FILE* inputFile = fopen(inputFileName, "r");
+		if (inputFile == NULL) {
+			fprintf(stderr, "%s: can not read points file: %s\n\n", argv[0], inputFileName);
 			exit(EXIT_FAILURE);
 		}
 
-		if (read_pts_failed(inf, &pts)) {
+		if (read_pts_failed(inputFile, &points)) {
 			fprintf(stderr, "%s: bad contents of points file: %s\n\n", argv[0],
-				inp);
+				inputFileName);
 			exit(EXIT_FAILURE);
 		}
-		fclose(inf);
+		fclose(inputFile);
 
-		ouf = fopen(out, "w");
-		if (ouf == NULL) {
-			fprintf(stderr, "%s: can not write spline file: %s\n\n", argv[0], out);
+		FILE* outputFile = fopen(splineFileName, "w");
+		if (outputFile == NULL) {
+			fprintf(stderr, "%s: can not write spline file: %s\n\n", argv[0], splineFileName);
 			exit(EXIT_FAILURE);
 		}
 
-		make_spl(&pts, &spl);
+		make_spl(&points, &line);
 
-		if (spl.n > 0)
-			write_spl(&spl, ouf);
+		if (line.n > 0)
+			write_spl(&line, outputFile);
 
-		fclose(ouf);
+		fclose(outputFile);
 	}
-	else if (out != NULL) {  /* if point-file was NOT given, try to read splines from a file */
-		FILE* splf = fopen(out, "r");
-		if (splf == NULL) {
-			fprintf(stderr, "%s: can not read spline file: %s\n\n", argv[0], inp);
+	else if (splineFileName != NULL) {  /* if point-file was NOT given, try to read splines from a file */
+		FILE* splinesFile = fopen(splineFileName, "r");
+		if (splinesFile == NULL) {
+			fprintf(stderr, "%s: can not read spline file: %s\n\n", argv[0], inputFileName);
 			exit(EXIT_FAILURE);
 		}
-		if (read_spl(splf, &spl)) {
+		if (read_spl(splinesFile, &line)) {
 			fprintf(stderr, "%s: bad contents of spline file: %s\n\n", argv[0],
-				inp);
+				inputFileName);
 			exit(EXIT_FAILURE);
 		}
 	}
@@ -123,43 +121,42 @@ main(int argc, char** argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if (spl.n < 1) { /* check if there is a valid spline */
-		fprintf(stderr, "%s: bad spline: n=%d\n\n", argv[0], spl.n);
+	if (line.n < 1) { /* check if there is a valid spline */
+		fprintf(stderr, "%s: bad spline: n=%d\n\n", argv[0], line.n);
 		exit(EXIT_FAILURE);
 	}
 
 	/* check if plot was requested and generate it if yes */
-	if (gpt != NULL && n > 1) {
-		FILE* gpf = fopen(gpt, "w");
-		int i;
-		double dx;
-		if (fromX == 0 && toX == 0) { /* calculate plot range if it was not specified */
-			if (pts.n > 1) {
-				fromX = pts.x[0];
-				toX = pts.x[pts.n - 1];
+	if (plotFileName != NULL && n > 1) {
+		FILE* plotFile = fopen(plotFileName, "w");
+
+		if (fromX == 0.0 && toX == 0.0) { /* calculate plot range if it was not specified */
+			if (points.n > 1) {
+				fromX = points.x[0];
+				toX = points.x[points.n - 1];
 			}
-			else if (spl.n > 1) {
-				fromX = spl.x[0];
-				toX = spl.x[spl.n - 1];
+			else if (line.n > 1) {
+				fromX = line.x[0];
+				toX = line.x[line.n - 1];
 			}
 			else {
 				fromX = 0;
 				toX = 1;
 			}
 		}
-		dx = (toX - fromX) / (n - 1);
+		double dx = (toX - fromX) / (n - 1);
 
-		if (gpf == NULL) {
+		if (plotFile == NULL) {
 			fprintf(stderr, "%s: can not write gnuplot file: %s\n\n", argv[0],
-				gpt);
+				plotFileName);
 			exit(EXIT_FAILURE);
 		}
-
+		int i;
 		for (i = 0; i < n; i++)
-			fprintf(gpf, "%g %g\n", fromX + i * dx,
-				value_spl(&spl, fromX + i * dx));
+			fprintf(plotFile, "%g %g\n", fromX + i * dx,
+				value_spl(&line, fromX + i * dx));
 
-		fclose(gpf);
+		fclose(plotFile);
 	}
 
 	return 0;

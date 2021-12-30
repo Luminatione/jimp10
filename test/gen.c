@@ -4,8 +4,8 @@
 #include <time.h>
 
 double fun( double x ) {
-				double r= ((double)rand() - RAND_MAX/2.0)/RAND_MAX/5; // +-10%
-				return (1+r)*(10*x*x*x*x+5*x*x*x+x*x);
+				//double r= ((double)rand() - RAND_MAX/2.0)/RAND_MAX/5; // +-10%
+				return (1.0/3.0*x*x*x+2*x*x+x - 10);
 }
 
 int main( int argc, char **argv ) {
@@ -18,9 +18,9 @@ int main( int argc, char **argv ) {
 
 				int i;
 				double dx = (b-a)/(n-1);
-
+				
 				for( i =0; i < n; i++ ) {
-								fprintf( out, "%g %g\n", a+i*dx, fun(a+i*dx) );
+								fprintf( out, "%g %g\n", a+i*dx, fun(a+i*dx));
 				}
 				fclose( out );
 
