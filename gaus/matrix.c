@@ -3,6 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
+void freeMatrix(matrix_t* matrix)
+{
+    free(matrix->e);
+}
+
 matrix_t *
 make_matrix (int rn, int cn)
 {

@@ -12,6 +12,8 @@ typedef struct {
 		double *f3;
 } spline_t;
 
+void freeSpline(spline_t* spline);
+
 int alloc_spl( spline_t *spl, int n );
 
 int  read_spl ( FILE *inputFile,  spline_t *spl );

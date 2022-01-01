@@ -2,6 +2,7 @@
 #include "piv_ge_solver.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 void
 make_spl(points_t* pts, spline_t* spl)
@@ -64,4 +65,6 @@ make_spl(points_t* pts, spline_t* spl)
 		spl->f2[n] = 0;
 		spl->f3[n] = 0;
 	}
+	freeMatrix(eqs);
+	free(eqs);
 }

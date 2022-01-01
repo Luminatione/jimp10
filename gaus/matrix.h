@@ -9,6 +9,8 @@ typedef struct {
     double *e;
 } matrix_t;
 
+void freeMatrix(matrix_t* matrix);
+
 matrix_t * make_matrix( int rn, int cn );
 
 matrix_t * read_matrix( FILE *in );

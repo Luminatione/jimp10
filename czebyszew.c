@@ -42,7 +42,7 @@ double getB(points_t* points)
 }
 int getN(int pointsAmount)
 {
-	int	N = pointsAmount - 3 > 10 ? 10 : pointsAmount - 3;
+	int	N = pointsAmount - 2 > 10 ? 10 : pointsAmount - 2;
 	char* approximationBaseSizeStr = getenv("APPROX_BASE_SIZE");
 	int approximationBaseSize = -1;
 	if (approximationBaseSizeStr != NULL)
@@ -53,7 +53,6 @@ int getN(int pointsAmount)
 }
 double computeTx_n(double x, int n)
 {
-	double previous = 1;
 	return cos(n * acos(x));
 }
 double castXtoU(double a, double b, double x)
@@ -99,6 +98,7 @@ double f(double x, const struct chebychew polynomial)
 	}
 	return value;
 }
+//https://en.wikipedia.org/wiki/Chebyshev_polynomials#Differentiation_and_integration
 double d1f(double x, const struct chebychew polynomial)
 {
 	double u = castXtoU(polynomial.a, polynomial.b, x);
@@ -112,23 +112,40 @@ double d1f(double x, const struct chebychew polynomial)
 double d2f(double x, const struct chebychew polynomial)
 {
 	double u = castXtoU(polynomial.a, polynomial.b, x);
-	double value = polynomial.coefficients[0];
-	for (int i = 1; i < polynomial.coefficientsAmount; i++)
+	double value = 0;
+	if (u == 1.0 || u == -1.0)
 	{
-		value += i * i * polynomial.coefficients[i] * chebyshewN(u, i - 2, 3);//(i * T_n(u, i) - u * U_n(u, i - 1)) / (u * u - 1);
+		for (int i = 0; i < polynomial.coefficientsAmount; i++)
+		{
+			value += polynomial.coefficients[i] * pow(u, i) * (pow(i, 4) - pow(i, 2)) / 3;
+		}
+		return value;
+	}
+
+	for (int i = 0; i < polynomial.coefficientsAmount; i++)
+	{
+		value += i * polynomial.coefficients[i] * ((i * T_n(u, i) - u * U_n(u, i - 1)) / (u * u - 1));
 	}
 	return value;
 }
+
 double d3f(double x, const struct chebychew polynomial)
 {
 	double u = castXtoU(polynomial.a, polynomial.b, x);
-	double value = polynomial.coefficients[0];
-	for (int i = 1; i < polynomial.coefficientsAmount; i++)
+	double value = 0;
+	if (u == 1.0 || u == -1.0)
 	{
-		value += i * i * i * polynomial.coefficients[i] * chebyshewN(u, i - 3, 4);
-		//((u * u - 1) * i * i * U_n(u, i - 1) - u * (i * T_n(u, i) - u *
-		//U_n(u, i - 1)) - 2 * u * i * T_n(u, i) + (u * u + 1) * U_n(u, i - 1)) / (u * u - 1) / (u * u - 1);
-	//(u * u + 1) comes from https://www.wolframalpha.com/input/?i2d=true&i=D%5Ba*n*Divide%5B%5C%2840%29n*T0%5C%2840%29x%5C%2841%29-x*U1%5C%2840%29x%5C%2841%29%5C%2841%29%2CPower%5Bx%2C2%5D-1%5D%2Cx%5D but why is it here?
+		for (int i = 0; i < polynomial.coefficientsAmount; i++)
+		{
+			value += polynomial.coefficients[i] * pow(u, i + 1) * (pow(i, 6) - 5 * pow(i, 4) + 4 * pow(i, 2)) / 15;
+		}
+		return value;
+	}
+	for (int i = 0; i < polynomial.coefficientsAmount; i++)
+	{
+		value += i * polynomial.coefficients[i] * ((u * u - 1) * i * i * U_n(u, i - 1) - u * (i * T_n(u, i) - u *
+			U_n(u, i - 1)) - 2 * u * i * T_n(u, i) + (u * u + 1) * U_n(u, i - 1)) / (u * u - 1) / (u * u - 1);
+		//(u * u + 1) comes from https://www.wolframalpha.com/input/?i2d=true&i=D%5Ba*n*Divide%5B%5C%2840%29n*T0%5C%2840%29x%5C%2841%29-x*U1%5C%2840%29x%5C%2841%29%5C%2841%29%2CPower%5Bx%2C2%5D-1%5D%2Cx%5D but why is it here?
 	}
 	return value;
 }
@@ -189,12 +206,15 @@ double* transformXToChebyshevInterval(points_t* points, double a, double b)
 	{
 		u[i] = castXtoU(a, b, points->x[i]);
 	}
+	return u;
 }
 void make_spl(points_t* pts, spline_t* spl)
 {
 	double a = getA(pts), b = getB(pts);
-	int N = getN(pts->n) + 1;
-	matrix_t* T = pointsToSymetricMatrix(pts, transformXToChebyshevInterval(pts, a, b), N);
+	int N = getN(pts->n);
+	double* u = transformXToChebyshevInterval(pts, a, b);
+	matrix_t* T = pointsToSymetricMatrix(pts, u, N);
+	free(u);
 #ifdef DEBUG
 	write_matrix(T, stdout);
 #endif
@@ -206,5 +226,9 @@ void make_spl(points_t* pts, spline_t* spl)
 #ifdef DEBUG
 	write_matrix(T, stdout);
 #endif
-	fillSpline(spl, createChebyshevPolynomial(a, b, N, T));
+	struct chebychew polynomial = createChebyshevPolynomial(a, b, N, T);
+	fillSpline(spl, polynomial);
+	free(polynomial.coefficients);
+	freeMatrix(T);
+	free(T);
 }

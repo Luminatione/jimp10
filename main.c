@@ -78,7 +78,7 @@ main(int argc, char** argv)
 
 	/* if points-file was given, then read points, generate spline, save it to file */
 	if (inputFileName != NULL) {
-		FILE* inputFile = fopen(inputFileName, "r");
+		FILE* inputFile = fopen(inputFileName, "r");//not closed
 		if (inputFile == NULL) {
 			fprintf(stderr, "%s: can not read points file: %s\n\n", argv[0], inputFileName);
 			exit(EXIT_FAILURE);
@@ -87,16 +87,15 @@ main(int argc, char** argv)
 		if (read_pts_failed(inputFile, &points)) {
 			fprintf(stderr, "%s: bad contents of points file: %s\n\n", argv[0],
 				inputFileName);
+			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
-		fclose(inputFile);
-
 		FILE* outputFile = fopen(splineFileName, "w");
 		if (outputFile == NULL) {
 			fprintf(stderr, "%s: can not write spline file: %s\n\n", argv[0], splineFileName);
+			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
-
 		make_spl(&points, &line);
 
 		if (line.n > 0)
@@ -108,21 +107,29 @@ main(int argc, char** argv)
 		FILE* splinesFile = fopen(splineFileName, "r");
 		if (splinesFile == NULL) {
 			fprintf(stderr, "%s: can not read spline file: %s\n\n", argv[0], inputFileName);
+			freeSpline(&line);
+			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
 		if (read_spl(splinesFile, &line)) {
 			fprintf(stderr, "%s: bad contents of spline file: %s\n\n", argv[0],
 				inputFileName);
+			freeSpline(&line);
+			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
 	}
 	else { /* ponts were not given nor spline was given -> it is an error */
 		fprintf(stderr, usage, argv[0]);
+		freeSpline(&line);
+		freePoints(&points);
 		exit(EXIT_FAILURE);
 	}
 
 	if (line.n < 1) { /* check if there is a valid spline */
 		fprintf(stderr, "%s: bad spline: n=%d\n\n", argv[0], line.n);
+		freeSpline(&line);
+		freePoints(&points);
 		exit(EXIT_FAILURE);
 	}
 
@@ -149,6 +156,8 @@ main(int argc, char** argv)
 		if (plotFile == NULL) {
 			fprintf(stderr, "%s: can not write gnuplot file: %s\n\n", argv[0],
 				plotFileName);
+			freeSpline(&line);
+			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
 		int i;
@@ -158,6 +167,8 @@ main(int argc, char** argv)
 
 		fclose(plotFile);
 	}
+	freeSpline(&line);
+	freePoints(&points);
 
 	return 0;
 }

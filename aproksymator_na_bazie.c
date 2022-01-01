@@ -175,8 +175,8 @@ make_spl(points_t* pts, spline_t* spl)
 		for (i = 0; i < nb; i++)
 			for (k = 0; k < pts->n; k++)
 				add_to_entry_matrix(equations, j, i, fi(a, b, nb, i, x[k]) * fi(a, b, nb, j, x[k]));
-
-		for (k = 0; k < pts->n; k++)
+		 
+		for (k = 0; k < pts->n; k++) 
 			add_to_entry_matrix(equations, j, nb, y[k] * fi(a, b, nb, j, x[k]));
 	}
 
@@ -231,5 +231,6 @@ make_spl(points_t* pts, spline_t* spl)
 	fclose(tst);
 
 #endif
-
+	freeMatrix(equations);
+	free(equations);
 }
