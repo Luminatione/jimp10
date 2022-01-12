@@ -1,5 +1,6 @@
 libge: matrix.o pivot.o piv_ge_solver.o
-	ar rvs libge.a $^
+	ar rvs ../libge.a $^
+	-rm *.o
 
 matrix.o: matrix.c matrix.h
 pivot.o: pivot.c matrix.h
