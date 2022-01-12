@@ -108,28 +108,21 @@ main(int argc, char** argv)
 		FILE* splinesFile = fopen(splineFileName, "r");
 		if (splinesFile == NULL) {
 			fprintf(stderr, "%s: can not read spline file: %s\n\n", argv[0], inputFileName);
-			freeSpline(&line);
-			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
 		if (read_spl(splinesFile, &line)) {
 			fprintf(stderr, "%s: bad contents of spline file: %s\n\n", argv[0],
 				inputFileName);
-			freeSpline(&line);
-			freePoints(&points);
 			exit(EXIT_FAILURE);
 		}
 	}
 	else { /* ponts were not given nor spline was given -> it is an error */
 		fprintf(stderr, usage, argv[0]);
-		freeSpline(&line);
-		freePoints(&points);
 		exit(EXIT_FAILURE);
 	}
 
 	if (line.n < 1) { /* check if there is a valid spline */
 		fprintf(stderr, "%s: bad spline: n=%d\n\n", argv[0], line.n);
-		freeSpline(&line);
 		freePoints(&points);
 		exit(EXIT_FAILURE);
 	}
