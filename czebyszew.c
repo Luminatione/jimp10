@@ -12,22 +12,12 @@ struct chebychew
 	double* coefficients;
 };
 
-//we r assuming x_j -> PI*(k-0.5)/N (?)
-double getJthC(int j, int N, double y_j, double x_j)
-{
-	double c = 0;
-	for (int k = 0; k < N; k++)
-	{
-		c += y_j * cos(j * x_j);
-	}
-	return c * 2 / N;
-}
 double getA(points_t* points)
 {
 	double a = points->x[0];
 	for (int i = 1; i < points->n; i++)
 	{
-		a = min(a, points->x[i]);
+		a = fmin(a, points->x[i]);
 	}
 	return a;
 }
@@ -36,7 +26,7 @@ double getB(points_t* points)
 	double b = points->x[0];
 	for (int i = 1; i < points->n; i++)
 	{
-		b = max(b, points->x[i]);
+		b = fmax(b, points->x[i]);
 	}
 	return b;
 }
@@ -145,7 +135,7 @@ double d3f(double x, const struct chebychew polynomial)
 	{
 		value += i * polynomial.coefficients[i] * ((u * u - 1) * i * i * U_n(u, i - 1) - u * (i * T_n(u, i) - u *
 			U_n(u, i - 1)) - 2 * u * i * T_n(u, i) + (u * u + 1) * U_n(u, i - 1)) / (u * u - 1) / (u * u - 1);
-		//(u * u + 1) comes from https://www.wolframalpha.com/input/?i2d=true&i=D%5Ba*n*Divide%5B%5C%2840%29n*T0%5C%2840%29x%5C%2841%29-x*U1%5C%2840%29x%5C%2841%29%5C%2841%29%2CPower%5Bx%2C2%5D-1%5D%2Cx%5D but why is it here?
+		//https://www.wolframalpha.com/input/?i2d=true&i=D%5Ba*n*Divide%5B%5C%2840%29n*T0%5C%2840%29x%5C%2841%29-x*U1%5C%2840%29x%5C%2841%29%5C%2841%29%2CPower%5Bx%2C2%5D-1%5D%2Cx%5D
 	}
 	return value;
 }
@@ -179,7 +169,7 @@ void fillSpline(spline_t* spl, struct chebychew polynomial)
 matrix_t* pointsToSymetricMatrix(points_t* pts, double* u, int N)
 {
 	matrix_t* T = make_matrix(N, N + 1);
-	//matrix is build like T_0(u_0) T_1(u_0)...
+	//matrix is built like T_0(u_0) T_1(u_0)...
 	//					   T_0(u_1) T_1(u_1)...
 	// and so on
 	for (int i = 0; i < N; i++)
@@ -215,17 +205,13 @@ void make_spl(points_t* pts, spline_t* spl)
 	double* u = transformXToChebyshevInterval(pts, a, b);
 	matrix_t* T = pointsToSymetricMatrix(pts, u, N);
 	free(u);
-#ifdef DEBUG
-	write_matrix(T, stdout);
-#endif
+
 	if (piv_ge_solver(T) || alloc_spl(spl, N))
 	{
 		spl->n = 0;
 		return;
 	}
-#ifdef DEBUG
-	write_matrix(T, stdout);
-#endif
+
 	struct chebychew polynomial = createChebyshevPolynomial(a, b, N, T);
 	fillSpline(spl, polynomial);
 	free(polynomial.coefficients);

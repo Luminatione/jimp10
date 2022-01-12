@@ -26,6 +26,7 @@ char* usage =
 int
 main(int argc, char** argv)
 {
+
 	int opt;
 	char* inputFileName = NULL;
 	char* splineFileName = NULL;
