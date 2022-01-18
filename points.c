@@ -10,8 +10,10 @@ realloc_pts_failed(points_t* pts, int size)
 
 void freePoints(points_t* points)
 {
-	free(points->x);
-	free(points->y);
+	if (points->x == NULL)
+		free(points->x);
+	if (points->y == NULL)
+		free(points->y);
 }
 
 int
@@ -27,7 +29,7 @@ read_pts_failed(FILE* inf, points_t* pts)
 			return 1;
 		}
 		pts->y = malloc(100 * sizeof * pts->y);
-		if (pts->y == NULL) 
+		if (pts->y == NULL)
 		{
 			free(pts->x);
 			return 1;
@@ -39,12 +41,12 @@ read_pts_failed(FILE* inf, points_t* pts)
 		size = pts->n;
 	}
 
-	while (fscanf(inf, "%lf %lf", &x, &y) == 2) 
+	while (fscanf(inf, "%lf %lf", &x, &y) == 2)
 	{
 		pts->x[pts->n] = x;
 		pts->y[pts->n] = y;
 		pts->n++;
-		if (!feof(inf) && pts->n == size) 
+		if (!feof(inf) && pts->n == size)
 		{
 			if (realloc_pts_failed(pts, 2 * size))
 			{

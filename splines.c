@@ -6,11 +6,16 @@
 
 void freeSpline(spline_t* spline)
 {
-	free(spline->x);
-	free(spline->f);
-	free(spline->f1);
-	free(spline->f2);
-	free(spline->f3);
+	if (spline->x == NULL)
+		free(spline->x);
+	if (spline->f == NULL)
+		free(spline->f);
+	if (spline->f1 == NULL)
+		free(spline->f1);
+	if (spline->f2 == NULL)
+		free(spline->f2);
+	if (spline->f3 == NULL)
+		free(spline->f3);
 }
 
 int

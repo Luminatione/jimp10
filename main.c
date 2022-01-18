@@ -23,6 +23,22 @@ char* usage =
 "               - n_points must be > 1\n"
 "            endif\n";
 
+void initializePointsWithNULL(points_t* points)
+{
+	points->n = 0;
+	points->x = NULL;
+	points->y = NULL;
+}
+void initializeSplineWithNULL(spline_t* spline)
+{
+	spline->n = 0;
+	spline->x = NULL;
+	spline->f = NULL;
+	spline->f1 = NULL;
+	spline->f2 = NULL;
+	spline->f3 = NULL;
+}
+
 int
 main(int argc, char** argv)
 {
@@ -39,8 +55,8 @@ main(int argc, char** argv)
 	points_t points;
 	spline_t line;
 
-	points.n = 0;
-	line.n = 0;
+	initializePointsWithNULL(&points);
+	initializeSplineWithNULL(&line);
 
 	/* process options, save user choices */
 	while ((opt = getopt(argc, argv, "p:s:g:f:t:n:")) != -1) {
