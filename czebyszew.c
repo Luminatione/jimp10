@@ -32,7 +32,7 @@ double getB(points_t* points)
 }
 int getN(int pointsAmount)
 {
-	int	N = pointsAmount - 2 > 10 ? 10 : pointsAmount - 2;
+	int	N = pointsAmount > 5 ? 5 : pointsAmount;
 	char* approximationBaseSizeStr = getenv("APPROX_BASE_SIZE");
 	int approximationBaseSize = -1;
 	if (approximationBaseSizeStr != NULL)
@@ -78,6 +78,66 @@ double U_n(double u, int n)
 {
 	return chebyshewN(u, n, 2);
 }
+double chebyshewN1d(double u, int n)
+{
+	if (n < 1)
+	{
+		return 0;
+	}
+	if (n == 1)
+	{
+		return 1;
+	}
+	double previous = 1;
+	double current = 4 * u;
+	for (int i = 2; i < n; ++i)
+	{
+		double temp = 2 * u * current - previous + T_n(u, i);
+		previous = current;
+		current = temp;
+	}
+	return current;
+}
+double chebyshewN2d(double u, int n)
+{
+	if (n < 2)
+	{
+		return 0;
+	}
+	if (n == 2)
+	{
+		return 4;
+	}
+	double previous = 4;
+	double current = 24 * u;
+	for (int i = 3; i < n; ++i)
+	{
+		double temp = 2 * u * current - previous + 4 * chebyshewN1d(u, i);
+		previous = current;
+		current = temp;
+	}
+	return current;
+}
+double chebyshewN3d(double u, int n)
+{
+	if (n < 3)
+	{
+		return 0;
+	}
+	if (n == 3)
+	{
+		return 24;
+	}
+	double previous = 24;
+	double current = 192 * u;
+	for (int i = 4; i < n; ++i)
+	{
+		double temp = 2 * u * current - previous + 6 * chebyshewN2d(u, i);
+		previous = current;
+		current = temp;
+	}
+	return current;
+}
 double f(double x, const struct chebychew polynomial)
 {
 	double u = castXtoU(polynomial.a, polynomial.b, x);
@@ -95,7 +155,7 @@ double d1f(double x, const struct chebychew polynomial)
 	double value = 0;
 	for (int i = 0; i < polynomial.coefficientsAmount; i++)
 	{
-		value += i * polynomial.coefficients[i] * U_n(u, i - 1);
+		value += polynomial.coefficients[i] * chebyshewN1d(u, i);
 	}
 	return value;
 }
@@ -114,7 +174,7 @@ double d2f(double x, const struct chebychew polynomial)
 
 	for (int i = 0; i < polynomial.coefficientsAmount; i++)
 	{
-		value += i * polynomial.coefficients[i] * ((i * T_n(u, i) - u * U_n(u, i - 1)) / (u * u - 1));
+		value += polynomial.coefficients[i] * chebyshewN2d(u, i);
 	}
 	return value;
 }
@@ -133,9 +193,7 @@ double d3f(double x, const struct chebychew polynomial)
 	}
 	for (int i = 0; i < polynomial.coefficientsAmount; i++)
 	{
-		value += i * polynomial.coefficients[i] * ((u * u - 1) * i * i * U_n(u, i - 1) - u * (i * T_n(u, i) - u *
-			U_n(u, i - 1)) - 2 * u * i * T_n(u, i) + (u * u + 1) * U_n(u, i - 1)) / (u * u - 1) / (u * u - 1);
-		//https://www.wolframalpha.com/input/?i2d=true&i=D%5Ba*n*Divide%5B%5C%2840%29n*T0%5C%2840%29x%5C%2841%29-x*U1%5C%2840%29x%5C%2841%29%5C%2841%29%2CPower%5Bx%2C2%5D-1%5D%2Cx%5D
+		value += polynomial.coefficients[i] * chebyshewN3d(u, i);
 	}
 	return value;
 }
@@ -214,6 +272,16 @@ void make_spl(points_t* pts, spline_t* spl)
 
 	struct chebychew polynomial = createChebyshevPolynomial(a, b, N, T);
 	fillSpline(spl, polynomial);
+
+#ifdef _DEBUG
+	FILE* debugOutput = fopen("dOutput", "w");
+	for (int i = 0; i < spl->n; i++)
+	{
+		fprintf(debugOutput, "%g %g\n", spl->x[i], spl->f[i]);
+	}
+	fclose(debugOutput);
+#endif
+
 	free(polynomial.coefficients);
 	freeMatrix(T);
 	free(T);
