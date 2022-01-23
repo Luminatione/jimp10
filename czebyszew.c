@@ -5,6 +5,8 @@
 #include <math.h>
 #include <stdlib.h>
 
+#define _DEBUG
+
 struct chebychew
 {
 	double a, b;
@@ -260,6 +262,7 @@ void make_spl(points_t* pts, spline_t* spl)
 {
 	double a = getA(pts), b = getB(pts);
 	int N = getN(pts->n);
+	//int N = 50;
 	double* u = transformXToChebyshevInterval(pts, a, b);
 	matrix_t* T = pointsToSymetricMatrix(pts, u, N);
 	free(u);

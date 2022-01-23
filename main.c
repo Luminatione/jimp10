@@ -14,7 +14,7 @@ char* usage =
 "               - number of points should be >= 4\n"
 "            else (points-file not given)\n"
 "               reads spline from spline-file\n"
-"            endfi\n"
+"            endif\n"
 "            if gnuplot-file is given then\n"
 "               makes table of n_points within <from_x,to_x> range\n"
 "               - from_x defaults to x-coordinate of the first point in points-file,\n"
